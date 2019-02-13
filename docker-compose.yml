@@ -11,9 +11,20 @@ services:
   redis:
     image: redis
 
+  logsdb:
+    build: ./logsdb
+    volumes:
+      - ${PWD}/logsdb/scripts:/scripts
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongoadmin
+      MONGO_INITDB_ROOT_PASSWORD: df_logs_admin
+      STATISTIC_TARGET_URL: https://postman-echo.com/post
+
   web:
     environment:
       SERVERNAME: dreamfactory.local
+      APP_DEBUG: "true"
+      APP_LOG_LEVEL: debug
       DB_DRIVER: mysql
       DB_HOST: mysql
       DB_USERNAME: df_admin
@@ -23,11 +34,15 @@ services:
       CACHE_HOST: redis
       CACHE_DATABASE: 0
       CACHE_PORT: 6379
-    volumes:
-      - df-storage:/opt/dreamfactory/storage
+      LOGSDB_HOST: logsdb
+      LOGSDB_DATABASE: access_log
+      LOGSDB_USERNAME: mongoadmin
+      LOGSDB_PASSWORD: df_logs_admin
     build: .
     ports:
       - "80:80"
+
+
 volumes:
   df-storage:
     driver: local

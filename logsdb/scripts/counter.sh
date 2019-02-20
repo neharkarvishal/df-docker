@@ -1,11 +1,18 @@
 #!/bin/bash
 
-SYSTEM_REQUESTS=`mongo --quiet --authenticationDatabase admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD access_log --eval "printjson(db.access.find({uri: /system/}).count())"`
+COUNTERS=`mongo --quiet --authenticationDatabase admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD access_log --eval 'printjson(db.access.aggregate([{$match: { uri: {"$regex":"^/api/v2*", $nin: [/api\/v2\/system/, "/api/v2", /^\/api\/v2\/user*/]}},  }, { "$group" : {_id:"$uri", total:{$sum:1}} } ]).toArray())'`
+
+OPERATION_TIMESTAMP="`date +'%Y-%m-%d %H:%M:%S %z'`";
 
 STATISTIC_PAYLOAD="
-    {\"system\": \"$SYSTEM_REQUESTS\"}
+    {
+        \"counted_at\": \"$OPERATION_TIMESTAMP\",
+        \"counters\": $COUNTERS
+    }
 "
-OPERATION_TIMESTAMP="`date +'%Y-%m-%d %H:%M:%S'`";
+
+#Pritn the resulting JSON
+jq . <<< $STATISTIC_PAYLOAD
 
 echo "---------------------"
 echo

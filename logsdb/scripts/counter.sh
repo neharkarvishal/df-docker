@@ -1,28 +1,36 @@
 #!/bin/bash
 
-COUNTERS=`mongo --quiet --authenticationDatabase admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD access_log --eval 'printjson(db.access.aggregate([{$match: { uri: {"$regex":"^/api/v2*", $nin: [/api\/v2\/system/, "/api/v2", /^\/api\/v2\/user*/]}},  }, { "$group" : {_id:"$uri", total:{$sum:1}} } ]).toArray())'`
+#TODO Inclide subscriber's prefix to able to identify the statistic
+#TODO somehow check that sql insertion was successful
+
+AGGREGATE_QUERY=`cat ./aggregate_counters.js`
+COUNTERS=`mongo --quiet --authenticationDatabase admin \
+                -u $MONGO_INITDB_ROOT_USERNAME \
+                -p $MONGO_INITDB_ROOT_PASSWORD \
+                access_log \
+                --eval "$AGGREGATE_QUERY"`
 
 OPERATION_TIMESTAMP="`date +'%Y-%m-%d %H:%M:%S %z'`";
 
-STATISTIC_PAYLOAD="
-    {
-        \"counted_at\": \"$OPERATION_TIMESTAMP\",
-        \"counters\": $COUNTERS
-    }
-"
+echo
+echo $COUNTERS
+echo
 
-#Pritn the resulting JSON
-jq . <<< $STATISTIC_PAYLOAD
+#Pretty pritn the resulting JSON
+jq . <<< $COUNTERS
 
 echo "---------------------"
 echo
-echo "$OPERATION_TIMESTAMP Sending Statistic:"
+echo "$OPERATION_TIMESTAMP Inserting Statistic:"
 jq . <<< $STATISTIC_PAYLOAD
+
+INSERTION_SQL=`COUNTERS_JSON=${COUNTERS:-'{}'} OP_TIME=$OPERATION_TIMESTAMP envsubst < ./insert_request_counters.sql`
+INSERTION_OUTPUT=`mysql -v -h "dreamfactory-saas-statistic.cmz2vpny0neq.us-east-1.rds.amazonaws.com" \
+                 -u "root" \
+                 "-p ... " \
+                 "statistic" \
+                 -e "$INSERTION_SQL"`
+
 echo
-echo "Target statistic URL - $STATISTIC_TARGET_URL"
+echo $INSERTION_OUTPUT
 echo
-echo "Performing CURl request..."
-RESP=`curl -s -w "\n{\"responseCode\": \"%{response_code}\"}" --header "Content-Type: application/json" -d "$STATISTIC_PAYLOAD" --request POST $STATISTIC_TARGET_URL`
-jq . <<< $RESP
-echo
-echo "---------------------"

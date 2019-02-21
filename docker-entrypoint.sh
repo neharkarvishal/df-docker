@@ -150,7 +150,7 @@ if [ -n "$REDIS_PORT" ]; then
   echo "REDIS_PORT=$REDIS_PORT" >> .env
 fi
 
-logsdb_vars=("LOGSDB_HOST" "LOGSDB_DATABASE" "LOGSDB_USERNAME" "LOGSDB_PASSWORD")
+logsdb_vars=("LOGSDB_HOST" "LOGSDB_PORT" "LOGSDB_DATABASE" "LOGSDB_USERNAME" "LOGSDB_PASSWORD")
 for var in "${logsdb_vars[@]}"
 do
   if [ -n "${!var}" ]; then
@@ -158,7 +158,6 @@ do
     sed -i "s/#${var}=.*/${var}=${!var}/" .env
   fi
 done
-
 
 # start php7.1-fpm
 service php7.1-fpm start

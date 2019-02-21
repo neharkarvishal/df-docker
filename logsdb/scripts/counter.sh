@@ -1,7 +1,8 @@
 #!/bin/bash
 
-#TODO Inclide subscriber's prefix to able to identify the statistic
+#TODO Include subscriber's prefix to able to identify the statistic
 #TODO somehow check that sql insertion was successful
+
 
 AGGREGATE_QUERY=`cat ./aggregate_counters.js`
 COUNTERS=`mongo --quiet --authenticationDatabase admin \
@@ -13,7 +14,7 @@ COUNTERS=`mongo --quiet --authenticationDatabase admin \
 OPERATION_TIMESTAMP="`date +'%Y-%m-%d %H:%M:%S %z'`";
 
 echo
-echo $COUNTERS
+printf "Counting at: \033[32m$OPERATION_TIMESTAMP"
 echo
 
 #Pretty pritn the resulting JSON
@@ -24,11 +25,14 @@ echo
 echo "$OPERATION_TIMESTAMP Inserting Statistic:"
 jq . <<< $STATISTIC_PAYLOAD
 
-INSERTION_SQL=`COUNTERS_JSON=${COUNTERS:-'{}'} OP_TIME=$OPERATION_TIMESTAMP envsubst < ./insert_request_counters.sql`
-INSERTION_OUTPUT=`mysql -v -h "dreamfactory-saas-statistic.cmz2vpny0neq.us-east-1.rds.amazonaws.com" \
-                 -u "root" \
-                 "-p ... " \
-                 "statistic" \
+INSERTION_SQL=`COUNTERS_JSON=${COUNTERS:-'{}'} \
+               OP_TIME=$OPERATION_TIMESTAMP \
+               envsubst < ./insert_request_counters.sql`
+
+INSERTION_OUTPUT=`mysql -v -h "$TARGET_DB_HOST" \
+                 -u "$TARGET_DB_USER" \
+                 "-p$TARGET_DB_PASS" \
+                 "$TARGET_DB_NAME" \
                  -e "$INSERTION_SQL"`
 
 echo

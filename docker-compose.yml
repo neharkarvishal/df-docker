@@ -18,7 +18,11 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongoadmin
       MONGO_INITDB_ROOT_PASSWORD: df_logs_admin
-      STATISTIC_TARGET_URL: https://postman-echo.com/post
+      TARGET_DB_HOST: mysql
+      TARGET_DB_USER: df_admin
+      TARGET_DB_PASS: df_admin
+      TARGET_DB_NAME: statistic
+      PREFIX: local
 
   web:
     environment:
@@ -41,7 +45,6 @@ services:
     build: .
     ports:
       - "80:80"
-
 
 volumes:
   df-storage:

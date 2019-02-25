@@ -12,15 +12,22 @@ services:
     image: redis
 
   logsdb:
-    build: ./logsdb
-    volumes:
-      - ${PWD}/logsdb/scripts:/scripts
+    image: mongo:4.0-xenial
     environment:
       MONGO_INITDB_ROOT_USERNAME: mongoadmin
       MONGO_INITDB_ROOT_PASSWORD: df_logs_admin
-      TARGET_DB_HOST: mysql
-      TARGET_DB_USER: df_admin
-      TARGET_DB_PASS: df_admin
+
+  statistic:
+    build: ./statistic
+    volumes:
+      - ${PWD}/statistic/scripts:/scripts
+    environment:
+      STATISTIC_DB_HOST: logsdb
+      STATISTIC_DB_USER: mongoadmin
+      STATISTIC_DB_PASS: df_logs_admin
+      TARGET_DB_HOST: thost
+      TARGET_DB_USER: tuser
+      TARGET_DB_PASS: tpass
       TARGET_DB_NAME: statistic
       PREFIX: local
 

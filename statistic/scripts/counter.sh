@@ -10,8 +10,8 @@ printf "\033[32mOPERATION STARTED\033[0m"
 echo
 
 COUNTERS=`mongo --host "$STATISTIC_DB_HOST" \
-                -u $MONGO_INITDB_ROOT_USERNAME \
-                -p $MONGO_INITDB_ROOT_PASSWORD \
+                -u $STATISTIC_DB_USER \
+                -p $STATISTIC_DB_PASS \
                 --quiet --authenticationDatabase admin \
                 access_log \
                  < /scripts/aggregate_counters.js`

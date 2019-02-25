@@ -1,40 +1,63 @@
 #!/bin/bash
 
-#TODO Include subscriber's prefix to able to identify the statistic
 #TODO somehow check that sql insertion was successful
+#TODO handle initial table setup - probably check somehow whether the table exists and create it if not
 
+echo
+printf "\033[0m---------------------\033[0m"
+echo
+printf "\033[32mOPERATION STARTED\033[0m"
+echo
 
-AGGREGATE_QUERY=`cat ./aggregate_counters.js`
-COUNTERS=`mongo --quiet --authenticationDatabase admin \
+COUNTERS=`mongo --host "$STATISTIC_DB_HOST" \
                 -u $MONGO_INITDB_ROOT_USERNAME \
                 -p $MONGO_INITDB_ROOT_PASSWORD \
+                --quiet --authenticationDatabase admin \
                 access_log \
-                --eval "$AGGREGATE_QUERY"`
+                 < /scripts/aggregate_counters.js`
+
 
 OPERATION_TIMESTAMP="`date +'%Y-%m-%d %H:%M:%S %z'`";
 
 echo
-printf "Counting at: \033[32m$OPERATION_TIMESTAMP"
+echo "Counting at:"
+printf "\033[32m$OPERATION_TIMESTAMP\033[0m"
+echo
 echo
 
-#Pretty pritn the resulting JSON
+# Pretty pritn the counters JSON
 jq . <<< $COUNTERS
 
-echo "---------------------"
 echo
-echo "$OPERATION_TIMESTAMP Inserting Statistic:"
-jq . <<< $STATISTIC_PAYLOAD
+echo "Inserting Statistic:"
+echo
 
-INSERTION_SQL=`COUNTERS_JSON=${COUNTERS:-'{}'} \
+# Iterate through counters JSON and insert each count as
+# separate record
+for row in $(echo "${COUNTERS}" | jq -r '.[] | @base64'); do
+    _jq() {
+     echo ${row} | base64 --decode | jq -r ${1}
+    }
+
+   INSERTION_SQL=`SERVICE=$(_jq '._id') \
+               COUNT=$(_jq '.total') \
                OP_TIME=$OPERATION_TIMESTAMP \
-               envsubst < ./insert_request_counters.sql`
+               envsubst < /scripts/insert_request_counters.sql`
 
-INSERTION_OUTPUT=`mysql -v -h "$TARGET_DB_HOST" \
+   INSERTION_OUTPUT=`mysql -v -h "$TARGET_DB_HOST" \
                  -u "$TARGET_DB_USER" \
                  "-p$TARGET_DB_PASS" \
                  "$TARGET_DB_NAME" \
                  -e "$INSERTION_SQL"`
+   echo
+   echo $INSERTION_OUTPUT
+   echo
+done
+
+
 
 echo
-echo $INSERTION_OUTPUT
+printf "\033[32mOPERATION FINISHED\033[0m"
+echo
+echo "---------------------"
 echo

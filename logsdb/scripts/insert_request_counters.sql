@@ -1,6 +1,7 @@
-INSERT INTO request_counts (prefix, counters, counted_at)
+INSERT INTO request_counts (prefix, service, count, counted_at)
 VALUES (
           '${PREFIX}',
-          '${COUNTERS_JSON}',
+          '${SERVICE}',
+          '${COUNT}',
           '${OP_TIME}'
        );

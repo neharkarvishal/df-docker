@@ -2,16 +2,16 @@
 set -e
 
 # mail setup
-CONF=/etc/ssmtp/ssmtp.conf
-rm -f $CONF
+#CONF=/etc/ssmtp/ssmtp.conf
+#rm -f $CONF
 
-for E in $(env)
-do
-  if [ "$(echo $E | sed -e '/^SSMTP_/!d' )" ]
-  then
-    echo $E | sed -e 's/^SSMTP_//' >> $CONF
-  fi
-done
+#for E in $(env)
+#do
+#  if [ "$(echo $E | sed -e '/^SSMTP_/!d' )" ]
+#  then
+#    echo $E | sed -e 's/^SSMTP_//' >> $CONF
+#  fi
+#done
 
 # update site configuration
 # if no servername is provided use dreamfactory.app as default

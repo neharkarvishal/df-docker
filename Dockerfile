@@ -122,6 +122,7 @@ ADD docker-entrypoint.sh /docker-entrypoint.sh
 # set proper permission to docker-entrypoint.sh script and forward error logs to docker log collector
 RUN chmod +x /docker-entrypoint.sh && ln -sf /dev/stderr /var/log/nginx/error.log && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 80
+USER 1001
+EXPOSE 8080
 
 CMD ["/docker-entrypoint.sh"]

@@ -28,7 +28,7 @@ services:
       - df-storage:/opt/dreamfactory/storage
     build: .
     ports:
-      - "80:80"
+      - "8080:8080"
 volumes:
   df-storage:
     driver: local
